@@ -1,0 +1,60 @@
+[tool.poetry]
+name = "channels-multiprocessing"
+description = "Django channels with plain multiprocessing"
+version = "0.1"
+license = "BSD"
+authors = ["Alexander Kaftan"]
+readme = "README.md"
+repository = "https://github.com/devkral/channels-multiprocessing"
+classifiers = [
+  "Framework :: Django",
+]
+
+[tool.poetry.dependencies]
+python = ">=3.9, <4"
+channels = "*"
+asgiref = ">=3.2.10,<4"
+
+
+[tool.poetry.group.dev.dependencies]
+tox="*"
+pytest = "*"
+pytest-asyncio = "*"
+async_timeout = "*"
+
+[tool.poetry.group.test]
+optional = true
+
+[tool.poetry.group.test.dependencies]
+pytest = "*"
+pytest-asyncio = "*"
+async_timeout = "*"
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+minversion = 3.4.0
+isolated_build = True
+envlist = py{38,39,310,311}
+
+[testenv]
+extras =
+  test
+commands =
+  pytest -v {posargs}
+
+
+setenv =
+  PYTHONDONTWRITEBYTECODE=1
+
+"""
+
+
+[pytest]
+addopts = "-p no:django"
+testpaths = "tests"
+asyncio_mode = "auto"
+
+[build-system]
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
