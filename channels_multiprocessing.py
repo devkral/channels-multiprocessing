@@ -18,7 +18,7 @@ def kill_children():
     [p.kill() for p in multiprocessing.active_children()]
 
 
-class ChannelsQueue(Queue):
+class ChannelsMultiprocessingQueue(Queue):
     def getp(self, block=True, timeout=None):
         with self.not_empty:
             if not block:
@@ -55,8 +55,8 @@ class ChannelsQueue(Queue):
 
 
 SyncManager.register(
-    "ChannelsQueue",
-    ChannelsQueue,
+    "ChannelsMultiprocessingQueue",
+    ChannelsMultiprocessingQueue,
 )
 
 
@@ -68,11 +68,13 @@ async def execute_sync(fn, *args):
     return await loop.run_in_executor(sync_executor, fn, *args)
 
 
-async def queue_aprune_expired(queue: ChannelsQueue):
+async def queue_aprune_expired(queue: ChannelsMultiprocessingQueue):
     return await execute_sync(queue.prune_expired)
 
 
-async def queue_agetp(queue: ChannelsQueue, block=True, timeout=None):
+async def queue_agetp(
+    queue: ChannelsMultiprocessingQueue, block=True, timeout=None
+):
     return await execute_sync(queue.getp, block, timeout)
 
 
@@ -84,18 +86,16 @@ async def queue_aput(queue: Queue, item, block=True, timeout=None):
     return await execute_sync(queue.put, item, block, timeout)
 
 
+# why? we want to be able to use execute_sync
 def _create_or_get_queue(
     manager: SyncManager, d, name, capacity
-) -> ChannelsQueue:
-    if name not in d:
-        d[name] = manager.ChannelsQueue(capacity)
-    return d[name]
+) -> ChannelsMultiprocessingQueue:
+    return d.setdefault(name, manager.ChannelsMultiprocessingQueue(capacity))
 
 
+# why? we want to be able to use execute_sync
 def _create_or_get_dict(manager, d, name):
-    if name not in d:
-        d[name] = manager.Dict()
-    return d[name]
+    return d.setdefault(name, manager.Dict())
 
 
 def _remove_from_groups(groups, channel):
@@ -160,7 +160,9 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         self.group_expiry = group_expiry
         self.manager = SyncManager(ctx=get_context("spawn"))
         self.manager.start()
-        self.channels: dict[str, ChannelsQueue] = self.manager.dict()
+        self.channels: dict[
+            str, ChannelsMultiprocessingQueue
+        ] = self.manager.dict()
         self.groups = self.manager.dict()
 
     # Channel layer API
