@@ -48,14 +48,14 @@ tests-no-zope = ["cloudpickle", "cloudpickle", "hypothesis", "hypothesis", "mypy
 
 [[package]]
 name = "cachetools"
-version = "5.2.0"
+version = "5.3.0"
 description = "Extensible memoizing collections and decorators"
 category = "dev"
 optional = false
 python-versions = "~=3.7"
 files = [
-    {file = "cachetools-5.2.0-py3-none-any.whl", hash = "sha256:f9f17d2aec496a9aa6b76f53e3b614c965223c061982d434d160f930c698a9db"},
-    {file = "cachetools-5.2.0.tar.gz", hash = "sha256:6a94c6402995a99c3970cc7e4884bb60b4a8639938157eeed436098bf9831757"},
+    {file = "cachetools-5.3.0-py3-none-any.whl", hash = "sha256:429e1a1e845c008ea6c85aa35d4b98b65d6a9763eeef3e37e92728a12d1de9d4"},
+    {file = "cachetools-5.3.0.tar.gz", hash = "sha256:13dfddc7b8df938c21a940dfa6557ce6e94a2f1cdfa58eb90c805721d58f2c14"},
 ]
 
 [[package]]
@@ -116,14 +116,14 @@ files = [
 
 [[package]]
 name = "django"
-version = "4.1.4"
+version = "4.1.6"
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "Django-4.1.4-py3-none-any.whl", hash = "sha256:0b223bfa55511f950ff741983d408d78d772351284c75e9f77d2b830b6b4d148"},
-    {file = "Django-4.1.4.tar.gz", hash = "sha256:d38a4e108d2386cb9637da66a82dc8d0733caede4c83c4afdbda78af4214211b"},
+    {file = "Django-4.1.6-py3-none-any.whl", hash = "sha256:c6fe7ebe7c017fe59f1029821dae0acb5a2ddcd6c9a0138fd20a8bfefac914bc"},
+    {file = "Django-4.1.6.tar.gz", hash = "sha256:bceb0fe1a386781af0788cae4108622756cd05e7775448deec04a71ddf87685d"},
 ]
 
 [package.dependencies]
@@ -168,26 +168,26 @@ testing = ["covdefaults (>=2.2.2)", "coverage (>=7.0.1)", "pytest (>=7.2)", "pyt
 
 [[package]]
 name = "iniconfig"
-version = "1.1.1"
-description = "iniconfig: brain-dead simple config-ini parsing"
+version = "2.0.0"
+description = "brain-dead simple config-ini parsing"
 category = "dev"
 optional = false
-python-versions = "*"
+python-versions = ">=3.7"
 files = [
-    {file = "iniconfig-1.1.1-py2.py3-none-any.whl", hash = "sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3"},
-    {file = "iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
+    {file = "iniconfig-2.0.0-py3-none-any.whl", hash = "sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374"},
+    {file = "iniconfig-2.0.0.tar.gz", hash = "sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3"},
 ]
 
 [[package]]
 name = "packaging"
-version = "22.0"
+version = "23.0"
 description = "Core utilities for Python packages"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "packaging-22.0-py3-none-any.whl", hash = "sha256:957e2148ba0e1a3b282772e791ef1d8083648bc131c8ab0c1feba110ce1146c3"},
-    {file = "packaging-22.0.tar.gz", hash = "sha256:2198ec20bd4c017b8f9717e00f0c8714076fc2fd93816750ab48e2c41de2cfd3"},
+    {file = "packaging-23.0-py3-none-any.whl", hash = "sha256:714ac14496c3e68c99c29b00845f7a2b85f3bb6f1078fd9f72fd20f0570002b2"},
+    {file = "packaging-23.0.tar.gz", hash = "sha256:b6ad297f8907de0fa2fe1ccbd26fdaf387f5f47c7275fedf8cce89f99446cf97"},
 ]
 
 [[package]]
@@ -224,14 +224,14 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "pyproject-api"
-version = "1.2.1"
+version = "1.5.0"
 description = "API to interact with the python pyproject.toml based projects"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pyproject_api-1.2.1-py3-none-any.whl", hash = "sha256:155d5623453173b7b4e9379a3146ccef2d52335234eb2d03d6ba730e7dad179c"},
-    {file = "pyproject_api-1.2.1.tar.gz", hash = "sha256:093c047d192ceadcab7afd6b501276bf2ce44adf41cb9c313234518cddd20818"},
+    {file = "pyproject_api-1.5.0-py3-none-any.whl", hash = "sha256:4c111277dfb96bcd562c6245428f27250b794bfe3e210b8714c4f893952f2c17"},
+    {file = "pyproject_api-1.5.0.tar.gz", hash = "sha256:0962df21f3e633b8ddb9567c011e6c1b3dcdfc31b7860c0ede7e24c5a1200fbe"},
 ]
 
 [package.dependencies]
@@ -244,14 +244,14 @@ testing = ["covdefaults (>=2.2.2)", "importlib-metadata (>=5.1)", "pytest (>=7.2
 
 [[package]]
 name = "pytest"
-version = "7.2.0"
+version = "7.2.1"
 description = "pytest: simple powerful testing with Python"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pytest-7.2.0-py3-none-any.whl", hash = "sha256:892f933d339f068883b6fd5a459f03d85bfcb355e4981e146d2c7616c21fef71"},
-    {file = "pytest-7.2.0.tar.gz", hash = "sha256:c4014eb40e10f11f355ad4e3c2fb2c6c6d1919c73f3b5a433de4708202cade59"},
+    {file = "pytest-7.2.1-py3-none-any.whl", hash = "sha256:c7c6ca206e93355074ae32f7403e8ea12163b1163c976fee7d4d84027c162be5"},
+    {file = "pytest-7.2.1.tar.gz", hash = "sha256:d45e0952f3727241918b8fd0f376f5ff6b301cc0777c6f9a556935c92d8a7d42"},
 ]
 
 [package.dependencies]
@@ -311,31 +311,31 @@ files = [
 
 [[package]]
 name = "tox"
-version = "4.0.19"
+version = "4.4.4"
 description = "tox is a generic virtualenv management and test command line tool"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "tox-4.0.19-py3-none-any.whl", hash = "sha256:2a51d4fd98a93b24819abbe9327fd759d39da73fb13aec3da954e8cd11f902ff"},
-    {file = "tox-4.0.19.tar.gz", hash = "sha256:31d95663dc66f8d53fdf0825f1fc931404b1db5380482c5449628f49db767047"},
+    {file = "tox-4.4.4-py3-none-any.whl", hash = "sha256:1195820ca35b141ce5ab040c9dfad8f03de6897c9bd867c6151dfb7dc58e64cd"},
+    {file = "tox-4.4.4.tar.gz", hash = "sha256:e1ef01d9e9503b1218511f74517dc3f0008c8b5e0cc53ab7f51ff3c2ca63b349"},
 ]
 
 [package.dependencies]
-cachetools = ">=5.2"
+cachetools = ">=5.2.1"
 chardet = ">=5.1"
 colorama = ">=0.4.6"
-filelock = ">=3.8.2"
-packaging = ">=22"
-platformdirs = ">=2.6"
+filelock = ">=3.9"
+packaging = ">=23"
+platformdirs = ">=2.6.2"
 pluggy = ">=1"
-pyproject-api = ">=1.2.1"
+pyproject-api = ">=1.5"
 tomli = {version = ">=2.0.1", markers = "python_version < \"3.11\""}
 virtualenv = ">=20.17.1"
 
 [package.extras]
-docs = ["furo (>=2022.12.7)", "sphinx (>=5.3)", "sphinx-argparse-cli (>=1.10)", "sphinx-autodoc-typehints (>=1.19.5)", "sphinx-copybutton (>=0.5.1)", "sphinx-inline-tabs (>=2022.1.2b11)", "sphinxcontrib-towncrier (>=0.2.1a0)", "towncrier (>=22.12)"]
-testing = ["build[virtualenv] (>=0.9)", "covdefaults (>=2.2.2)", "devpi-process (>=0.3)", "diff-cover (>=7.3)", "distlib (>=0.3.6)", "flaky (>=3.7)", "hatch-vcs (>=0.3)", "hatchling (>=1.11.1)", "psutil (>=5.9.4)", "pytest (>=7.2)", "pytest-cov (>=4)", "pytest-mock (>=3.10)", "pytest-xdist (>=3.1)", "re-assert (>=1.1)", "time-machine (>=2.8.2)"]
+docs = ["furo (>=2022.12.7)", "sphinx (>=6.1.3)", "sphinx-argparse-cli (>=1.11)", "sphinx-autodoc-typehints (>=1.20.1)", "sphinx-copybutton (>=0.5.1)", "sphinx-inline-tabs (>=2022.1.2b11)", "sphinxcontrib-towncrier (>=0.2.1a0)", "towncrier (>=22.12)"]
+testing = ["build[virtualenv] (>=0.9)", "covdefaults (>=2.2.2)", "devpi-process (>=0.3)", "diff-cover (>=7.3)", "distlib (>=0.3.6)", "flaky (>=3.7)", "hatch-vcs (>=0.3)", "hatchling (>=1.12.2)", "psutil (>=5.9.4)", "pytest (>=7.2)", "pytest-cov (>=4)", "pytest-mock (>=3.10)", "pytest-xdist (>=3.1)", "re-assert (>=1.1)", "time-machine (>=2.8.2)", "wheel (>=0.38.4)"]
 
 [[package]]
 name = "tzdata"
@@ -351,14 +351,14 @@ files = [
 
 [[package]]
 name = "virtualenv"
-version = "20.17.1"
+version = "20.18.0"
 description = "Virtual Python Environment builder"
 category = "dev"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 files = [
-    {file = "virtualenv-20.17.1-py3-none-any.whl", hash = "sha256:ce3b1684d6e1a20a3e5ed36795a97dfc6af29bc3970ca8dab93e11ac6094b3c4"},
-    {file = "virtualenv-20.17.1.tar.gz", hash = "sha256:f8b927684efc6f1cc206c9db297a570ab9ad0e51c16fa9e45487d36d1905c058"},
+    {file = "virtualenv-20.18.0-py3-none-any.whl", hash = "sha256:9d61e4ec8d2c0345dab329fb825eb05579043766a4b26a2f66b28948de68c722"},
+    {file = "virtualenv-20.18.0.tar.gz", hash = "sha256:f262457a4d7298a6b733b920a196bf8b46c8af15bf1fd9da7142995eff15118e"},
 ]
 
 [package.dependencies]
@@ -367,8 +367,8 @@ filelock = ">=3.4.1,<4"
 platformdirs = ">=2.4,<3"
 
 [package.extras]
-docs = ["proselint (>=0.13)", "sphinx (>=5.3)", "sphinx-argparse (>=0.3.2)", "sphinx-rtd-theme (>=1)", "towncrier (>=22.8)"]
-testing = ["coverage (>=6.2)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7)", "packaging (>=21.3)", "pytest (>=7.0.1)", "pytest-env (>=0.6.2)", "pytest-freezegun (>=0.4.2)", "pytest-mock (>=3.6.1)", "pytest-randomly (>=3.10.3)", "pytest-timeout (>=2.1)"]
+docs = ["furo (>=2022.12.7)", "proselint (>=0.13)", "sphinx (>=6.1.3)", "sphinx-argparse (>=0.4)", "sphinxcontrib-towncrier (>=0.2.1a0)", "towncrier (>=22.12)"]
+test = ["covdefaults (>=2.2.2)", "coverage (>=7.1)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7)", "packaging (>=23)", "pytest (>=7.2.1)", "pytest-env (>=0.8.1)", "pytest-freezegun (>=0.4.2)", "pytest-mock (>=3.10)", "pytest-randomly (>=3.12)", "pytest-timeout (>=2.1)"]
 
 [metadata]
 lock-version = "2.0"

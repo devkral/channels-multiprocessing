@@ -14,6 +14,9 @@ classifiers = [
 python = ">=3.9, <4"
 channels = "*"
 asgiref = ">=3.2.10,<4"
+pytest = {optional=true, version="*"}
+pytest-asyncio = {optional=true, version="*"}
+async_timeout = {optional=true, version="*"}
 
 
 [tool.poetry.group.dev.dependencies]
@@ -22,13 +25,8 @@ pytest = "*"
 pytest-asyncio = "*"
 async_timeout = "*"
 
-[tool.poetry.group.test]
-optional = true
-
-[tool.poetry.group.test.dependencies]
-pytest = "*"
-pytest-asyncio = "*"
-async_timeout = "*"
+[tool.poetry.extras]
+test = ["pytest", "pytest-asyncio", "async_timeout"]
 
 [tool.tox]
 legacy_tox_ini = """
