@@ -136,7 +136,7 @@ async def test_expiry_single():
         await layer.send("test-channel-1", {"type": "message.1"})
         assert len(layer.channels) == 1
 
-        await asyncio.sleep(0.15)
+        await asyncio.sleep(0.1)
 
         # Message should have expired and been dropped.
         with pytest.raises(asyncio.TimeoutError):
@@ -144,7 +144,6 @@ async def test_expiry_single():
                 await layer.receive("test-channel-1")
 
         # Channel should be cleaned up.
-        print(layer.channels.keys())
         assert len(layer.channels) == 0
 
 
@@ -160,13 +159,12 @@ async def test_expiry_unread():
         stack.push_async_callback(layer.close)
         await layer.send("test-channel-1", {"type": "message.1"})
 
-        await asyncio.sleep(0.15)
+        await asyncio.sleep(0.1)
 
         await layer.send("test-channel-2", {"type": "message.2"})
         assert len(layer.channels) == 2
         assert (await layer.receive("test-channel-2"))["type"] == "message.2"
         # Both channels should be cleaned up.
-        # There is a multiprocessing related error
         assert len(layer.channels) == 0
 
 
@@ -178,12 +176,13 @@ async def test_expiry_multi():
     async with AsyncExitStack() as stack:
         layer = MultiprocessingChannelLayer(expiry=0.1)
         stack.push_async_callback(layer.close)
+        assert len(layer.channels) == 0
         await layer.send("test-channel-1", {"type": "message.1"})
         await layer.send("test-channel-1", {"type": "message.2"})
         await layer.send("test-channel-1", {"type": "message.3"})
         assert (await layer.receive("test-channel-1"))["type"] == "message.1"
 
-        await asyncio.sleep(0.15)
+        await asyncio.sleep(0.1)
         await layer.send("test-channel-1", {"type": "message.4"})
         assert (await layer.receive("test-channel-1"))["type"] == "message.4"
 
@@ -193,5 +192,4 @@ async def test_expiry_multi():
                 await layer.receive("test-channel-1")
 
         # Channel should be cleaned up.
-        # There is a multiprocessing related error
         assert len(layer.channels) == 0
