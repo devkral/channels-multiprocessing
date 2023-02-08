@@ -136,35 +136,6 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
                     # Delete from group
                     del channels[name]
 
-    def _clean_expired2(self):
-        """
-        Goes through all messages and groups and
-        removes those that are expired.
-        Any channel with an expired message is removed from all groups.
-        """
-        if not self.active:
-            return
-        # Channel cleanup
-        for channel, queue in list(self.channels.items()):
-            # See if it's expired
-            try:
-                while self.execute_as_async(queue.prune_expired):
-                    # Any removal prompts group discard
-                    self._remove_from_groups(channel)
-            except Empty:
-                del self.channels[channel]
-
-        # Group Expiration
-        timeout = int(time.time()) - self.group_expiry
-        for channels in self.groups.values():
-
-            for name, timestamp in list(channels.items()):
-                # If join time is older than group_expiry
-                # end the group membership
-                if timestamp and int(timestamp) < timeout:
-                    # Delete from group
-                    del channels[name]
-
     # Channel layer API
 
     extensions = ["groups", "flush"]
@@ -200,7 +171,6 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         """
         assert self.valid_channel_name(channel)
         await self.execute_as_async(self._clean_expired)
-        # self._clean_expired2()
 
         queue = self._create_or_get_channel(channel)
 
@@ -270,7 +240,6 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         assert self.valid_group_name(group), "Invalid group name"
         # Run clean
         await self.execute_as_async(self._clean_expired)
-        # self._clean_expired2()
         # Send to each channel
         ops = []
         if group in self.groups:
