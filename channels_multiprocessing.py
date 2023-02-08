@@ -65,7 +65,7 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         group_expiry=86400,
         capacity=100,
         channel_capacity=None,
-        # mp_context=None,
+        mp_context=None,
         **kwargs,
     ):
         super().__init__(
@@ -77,7 +77,7 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         self.active = True
         self.group_expiry = group_expiry
         self.executor = ThreadPoolExecutor(max_workers=1)
-        self.manager = SyncManager(ctx=get_context())
+        self.manager = SyncManager(ctx=get_context(mp_context))
         self.manager.start()
         self.channels: dict[
             str, ChannelsMultiprocessingQueue
