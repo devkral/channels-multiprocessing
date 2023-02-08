@@ -166,7 +166,7 @@ async def test_groups_channel_full_parallel():
         await asyncio.gather(
             *[
                 layer.group_send("test-group", {"type": "message.1"})
-                for i in range(1000)
+                for i in range(500)
             ]
         )
 

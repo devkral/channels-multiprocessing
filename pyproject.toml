@@ -44,6 +44,7 @@ commands =
 
 setenv =
   PYTHONDONTWRITEBYTECODE=1
+  PYTHONASYNCIODEBUG=1
 
 """
 

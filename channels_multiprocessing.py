@@ -249,6 +249,7 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         await self.execute_as_async(self._clean_expired)
         # Send to each channel
         ops = []
+
         if group in self.groups:
             for channel in self.groups[group].keys():
                 ops.append(self.send(channel, message))
