@@ -8,7 +8,7 @@ from channels_multiprocessing import (
 
 
 @pytest.mark.asyncio
-async def test_send_receive():
+async def test_send_receive_simple():
     layer = MultiprocessingChannelLayer()
     message = {"type": "test.message"}
     async with async_timeout.timeout(1):
@@ -16,6 +16,7 @@ async def test_send_receive():
     async with async_timeout.timeout(1):
         assert message == await layer.receive("test.channel")
     await layer.flush()
+    await layer.close()
 
 
 @pytest.mark.parametrize(

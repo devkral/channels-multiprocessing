@@ -6,14 +6,18 @@ Adding a redis service makes thinks more complicated
 
 This is a try to use plain python utilities to provide channels layer functionality without configuration
 
+# idea
+
+we leverage multiprocessing for providing a channel layer. As multiprocessing doesn't play always nice with async
+we use a per layer a Thread to serialize the internal requests.
+Per default the default mp_context is used for creating the manager for multiprocessing synchronization
+It may be set manually to "spawn" in case of an non python asgi server with multiple process workers
+
 # State
 
-Non-functional.
-I have currently not much time and don't know if I can complete it
+simple tests passed, still problems with expiry (values of dict differ)
 
-# Things to think over
+# TODO
 
-It would maybe better to use RemoteManager.
-The whole logic is tied to that the asgi server uses a multiprocessing friendly approach.
-I am currently not familar with how robust the implementation is.
-Maybe there should be a client server model, with the server automatically spawning (RemoteManager approach) and closing after no input/when the asgi server is shutdown
+-   documentation
+-   investigate aioprocessing

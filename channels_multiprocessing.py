@@ -1,5 +1,4 @@
 from copy import deepcopy
-import multiprocessing
 from channels.layers import BaseChannelLayer
 from channels.exceptions import ChannelFull
 from multiprocessing.managers import SyncManager
@@ -8,14 +7,8 @@ import time
 import random
 import string
 from queue import Queue, Full, Empty
-import atexit
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
-
-
-@atexit.register
-def kill_children():
-    [p.kill() for p in multiprocessing.active_children()]
 
 
 class ChannelsMultiprocessingQueue(Queue):
@@ -60,83 +53,6 @@ SyncManager.register(
 )
 
 
-sync_executor = ThreadPoolExecutor(max_workers=1)
-
-
-async def execute_sync(fn, *args):
-    loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(sync_executor, fn, *args)
-
-
-async def queue_aprune_expired(queue: ChannelsMultiprocessingQueue):
-    return await execute_sync(queue.prune_expired)
-
-
-async def queue_agetp(
-    queue: ChannelsMultiprocessingQueue, block=True, timeout=None
-):
-    return await execute_sync(queue.getp, block, timeout)
-
-
-async def queue_aget(queue: Queue, block=True, timeout=None):
-    return await execute_sync(queue.get, block, timeout)
-
-
-async def queue_aput(queue: Queue, item, block=True, timeout=None):
-    return await execute_sync(queue.put, item, block, timeout)
-
-
-# why? we want to be able to use execute_sync
-def _create_or_get_queue(
-    manager: SyncManager, d, name, capacity
-) -> ChannelsMultiprocessingQueue:
-    return d.setdefault(name, manager.ChannelsMultiprocessingQueue(capacity))
-
-
-# why? we want to be able to use execute_sync
-def _create_or_get_dict(manager, d, name):
-    return d.setdefault(name, manager.Dict())
-
-
-def _remove_from_groups(groups, channel):
-    """
-    Removes a channel from all groups. Used when a message on it expires.
-    """
-    for channels in groups.values():
-        if channel in channels:
-            del channels[channel]
-
-
-def _clean_expired(channels, groups, group_expiry):
-    """
-    Goes through all messages and groups and
-    removes those that are expired.
-    Any channel with an expired message is removed from all groups.
-    """
-    # Channel cleanup
-    for channel, queue in list(channels.items()):
-        # See if it's expired
-        try:
-            while queue.prune_expired():
-                # Any removal prompts group discard
-                _remove_from_groups(groups, channel)
-        except Empty:
-            del channels[channel]
-
-    # Group Expiration
-    timeout = int(time.time()) - group_expiry
-    for group, channels in groups.items():
-        for channel in channels:
-            # If join time is older than group_expiry
-            # end the group membership
-            if (
-                groups[group][channel]
-                and int(groups[group][channel]) < timeout
-            ):
-                # Delete from group
-                del groups[group][channel]
-
-
 # based on InMemoryChannelLayer
 class MultiprocessingChannelLayer(BaseChannelLayer):
     """
@@ -149,6 +65,7 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         group_expiry=86400,
         capacity=100,
         channel_capacity=None,
+        # mp_context=None,
         **kwargs,
     ):
         super().__init__(
@@ -157,40 +74,100 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
             channel_capacity=channel_capacity,
             **kwargs,
         )
+        self.active = True
         self.group_expiry = group_expiry
-        self.manager = SyncManager(ctx=get_context("spawn"))
+        self.executor = ThreadPoolExecutor(max_workers=1)
+        self.manager = SyncManager(ctx=get_context())
         self.manager.start()
         self.channels: dict[
             str, ChannelsMultiprocessingQueue
         ] = self.manager.dict()
         self.groups = self.manager.dict()
 
+    async def execute_as_async(self, fn, *args):
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(self.executor, fn, *args)
+
+    # why? we want to be able to use execute_as_async
+    def _create_or_get_channel(self, name) -> ChannelsMultiprocessingQueue:
+        return self.channels.setdefault(
+            name,
+            self.manager.ChannelsMultiprocessingQueue(self.get_capacity(name)),
+        )
+
+    # why? we want to be able to use execute_as_async
+    def _create_or_get_dict(self, d, name):
+        return d.setdefault(name, self.manager.dict())
+
+    def _remove_from_groups(self, channel):
+        """
+        Removes a channel from all groups. Used when a message on it expires.
+        """
+        for channels in self.groups.values():
+            if channel in channels:
+                del channels[channel]
+
+    def _clean_expired(self):
+        """
+        Goes through all messages and groups and
+        removes those that are expired.
+        Any channel with an expired message is removed from all groups.
+        """
+        if not self.active:
+            return
+        # Channel cleanup
+        for channel, queue in list(self.channels.items()):
+            # See if it's expired
+            try:
+                while queue.prune_expired():
+                    # Any removal prompts group discard
+                    self._remove_from_groups(channel)
+            except Empty:
+                del self.channels[channel]
+
+        # Group Expiration
+        timeout = int(time.time()) - self.group_expiry
+        for channels in self.groups.values():
+
+            for name, timestamp in list(channels.items()):
+                # If join time is older than group_expiry
+                # end the group membership
+                if timestamp and int(timestamp) < timeout:
+                    # Delete from group
+                    del channels[name]
+
+    def _clean_expired2(self):
+        """
+        Goes through all messages and groups and
+        removes those that are expired.
+        Any channel with an expired message is removed from all groups.
+        """
+        if not self.active:
+            return
+        # Channel cleanup
+        for channel, queue in list(self.channels.items()):
+            # See if it's expired
+            try:
+                while self.execute_as_async(queue.prune_expired):
+                    # Any removal prompts group discard
+                    self._remove_from_groups(channel)
+            except Empty:
+                del self.channels[channel]
+
+        # Group Expiration
+        timeout = int(time.time()) - self.group_expiry
+        for channels in self.groups.values():
+
+            for name, timestamp in list(channels.items()):
+                # If join time is older than group_expiry
+                # end the group membership
+                if timestamp and int(timestamp) < timeout:
+                    # Delete from group
+                    del channels[name]
+
     # Channel layer API
 
     extensions = ["groups", "flush"]
-
-    def _send(self, channel, message):
-        """
-        Send a message onto a (general or specific) channel.
-        """
-        # Typecheck
-        assert isinstance(message, dict), "message is not a dict"
-        assert self.valid_channel_name(channel), "Channel name not valid"
-        # If it's a process-local channel, strip off local part and stick full
-        # name in message
-        assert "__asgi_channel__" not in message
-
-        queue = _create_or_get_queue(
-            self.manager, self.channels, channel, self.capacity
-        )
-
-        # Add message
-        try:
-            queue.put(
-                queue, (time.time() + self.expiry, deepcopy(message)), False
-            )
-        except Full:
-            raise ChannelFull(channel)
 
     async def send(self, channel, message):
         """
@@ -203,14 +180,14 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         # name in message
         assert "__asgi_channel__" not in message
 
-        queue = _create_or_get_queue(
-            self.manager, self.channels, channel, self.capacity
-        )
+        queue = self._create_or_get_channel(channel)
 
         # Add message
         try:
-            await queue_aput(
-                queue, (time.time() + self.expiry, deepcopy(message)), False
+            await self.execute_as_async(
+                queue.put,
+                (time.time() + self.expiry, deepcopy(message)),
+                False,
             )
         except Full:
             raise ChannelFull(channel)
@@ -222,17 +199,14 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         of the waiting coroutines will get the result.
         """
         assert self.valid_channel_name(channel)
-        await execute_sync(
-            _clean_expired, self.channels, self.groups, self.group_expiry
-        )
+        await self.execute_as_async(self._clean_expired)
+        # self._clean_expired2()
 
-        queue = _create_or_get_queue(
-            self.manager, self.channels, channel, self.capacity
-        )
+        queue = self._create_or_get_channel(channel)
 
         # Do a plain direct receive
         try:
-            _, message, is_empty = await queue_agetp(queue)
+            _, message, is_empty = await self.execute_as_async(queue.getp)
         except Empty:
             is_empty = True
         if is_empty:
@@ -254,12 +228,18 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
 
     # Flush extension
 
+    def _flush(self):
+        if self.active:
+            self.channels.clear()
+            self.groups.clear()
+
     async def flush(self):
-        self.channels = self.manager.dict()
-        self.groups = self.manager.dict()
+        await self.execute_as_async(self._flush)
 
     async def close(self):
-        await execute_sync(self.manager.shutdown)
+        self.active = False
+        self.manager.shutdown()
+        self.executor.shutdown(False, cancel_futures=True)
 
     # Groups extension
 
@@ -271,7 +251,7 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         assert self.valid_group_name(group), "Group name not valid"
         assert self.valid_channel_name(channel), "Channel name not valid"
         # Add to group dict
-        d = _create_or_get_dict(self.manager, self.groups, group)
+        d = self._create_or_get_dict(self.groups, group)
         d[channel] = time.time()
 
     async def group_discard(self, group, channel):
@@ -289,12 +269,11 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         assert isinstance(message, dict), "Message is not a dict"
         assert self.valid_group_name(group), "Invalid group name"
         # Run clean
-        execute_sync(
-            _clean_expired, self.channels, self.groups, self.group_expiry
-        )
+        await self.execute_as_async(self._clean_expired)
+        # self._clean_expired2()
         # Send to each channel
-        for channel in self.groups.get(group, set()):
-            try:
-                self.send(channel, message)
-            except ChannelFull:
-                pass
+        ops = []
+        if group in self.groups:
+            for channel in self.groups[group].keys():
+                ops.append(self.send(channel, message))
+        await asyncio.gather(*ops, return_exceptions=True)

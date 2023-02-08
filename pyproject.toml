@@ -31,7 +31,7 @@ test = ["pytest", "pytest-asyncio", "async_timeout"]
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-minversion = 3.4.0
+minversion = 4.0.0
 isolated_build = True
 envlist = py{38,39,310,311}
 
