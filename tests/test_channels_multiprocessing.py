@@ -1,5 +1,7 @@
 import pytest
 import async_timeout
+import asyncio
+import random
 
 from channels_multiprocessing import (
     MultiprocessingChannelLayer,
@@ -15,6 +17,34 @@ async def test_send_receive_simple():
         await layer.send("test.channel", message)
     async with async_timeout.timeout(1):
         assert message == await layer.receive("test.channel")
+    await layer.flush()
+    await layer.close()
+
+
+async def timeout_send(layer, message):
+    await asyncio.sleep(random.random() / 2)
+    async with async_timeout.timeout(1):
+        await layer.send("test.channel", message)
+
+
+async def timeout_receive(layer, message):
+    await asyncio.sleep(random.random() / 2)
+    async with async_timeout.timeout(1):
+        assert message == await layer.receive("test.channel")
+
+
+@pytest.mark.asyncio
+async def test_send_receive_wild_parallel():
+    layer = MultiprocessingChannelLayer()
+    message = {"type": "test.message"}
+    await asyncio.gather(
+        *[
+            timeout_send(layer, message)
+            if i % 2 == 0
+            else timeout_receive(layer, message)
+            for i in range(120)
+        ]
+    )
     await layer.flush()
     await layer.close()
 
