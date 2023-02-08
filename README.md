@@ -13,9 +13,34 @@ we use a per layer a Thread to serialize the internal requests.
 Per default the default mp_context is used for creating the manager for multiprocessing synchronization
 It may be set manually to "spawn" in case of an non python asgi server with multiple process workers
 
+# Usage
+
+```python
+CHANNEL_LAYERS = {
+"default": {
+        "BACKEND": "channels_multiprocessing.MultiprocessingChannelLayer"
+    }
+}
+```
+
+with explicit context
+
+```python
+CHANNEL_LAYERS = {
+"default": {
+        "BACKEND": "channels_multiprocessing.MultiprocessingChannelLayer",
+        "CONFIG": {
+            "mp_context": "spawn",
+        },
+    }
+}
+```
+
+Note: all options of BaseLayer are supported (e.g. capacity)
+
 # State
 
-simple tests passed, still problems with expiry (values of dict differ)
+tests passed
 
 # TODO
 

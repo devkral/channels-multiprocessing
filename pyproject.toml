@@ -13,7 +13,6 @@ classifiers = [
 [tool.poetry.dependencies]
 python = ">=3.9, <4"
 channels = "*"
-asgiref = ">=3.2.10,<4"
 pytest = {optional=true, version="*"}
 pytest-asyncio = {optional=true, version="*"}
 async_timeout = {optional=true, version="*"}
