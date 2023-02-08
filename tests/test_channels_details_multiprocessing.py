@@ -35,9 +35,11 @@ async def test_send_capacity():
     async with AsyncExitStack() as stack:
         layer = MultiprocessingChannelLayer(capacity=3)
         stack.push_async_callback(layer.close)
-        await layer.send("test-channel-1", {"type": "test.message"})
-        await layer.send("test-channel-1", {"type": "test.message"})
-        await layer.send("test-channel-1", {"type": "test.message"})
+        await asyncio.gather(
+            layer.send("test-channel-1", {"type": "test.message"}),
+            layer.send("test-channel-1", {"type": "test.message"}),
+            layer.send("test-channel-1", {"type": "test.message"}),
+        )
         with pytest.raises(ChannelFull):
             await layer.send("test-channel-1", {"type": "test.message"})
         await stack.aclose()
@@ -105,7 +107,35 @@ async def test_groups_basic():
         with pytest.raises(asyncio.TimeoutError):
             async with async_timeout.timeout(1):
                 await layer.receive("test-gr-chan-2")
-        await stack.aclose()
+
+
+@pytest.mark.asyncio
+async def test_groups_parallel():
+    """
+    Tests basic group operation.
+    """
+    async with AsyncExitStack() as stack:
+        layer = MultiprocessingChannelLayer()
+        stack.push_async_callback(layer.close)
+        await asyncio.gather(
+            layer.group_add("test-group", "test-gr-chan-1"),
+            layer.group_add("test-group", "test-gr-chan-2"),
+            layer.group_add("test-group", "test-gr-chan-3"),
+        )
+        await layer.group_discard("test-group", "test-gr-chan-2")
+        await layer.group_send("test-group", {"type": "message.1"})
+        # Make sure we get the message on the two channels that were in
+        async with async_timeout.timeout(1):
+            assert (await layer.receive("test-gr-chan-1"))[
+                "type"
+            ] == "message.1"
+            assert (await layer.receive("test-gr-chan-3"))[
+                "type"
+            ] == "message.1"
+        # Make sure the removed channel did not get the message
+        with pytest.raises(asyncio.TimeoutError):
+            async with async_timeout.timeout(1):
+                await layer.receive("test-gr-chan-2")
 
 
 @pytest.mark.asyncio
@@ -122,7 +152,23 @@ async def test_groups_channel_full():
         await layer.group_send("test-group", {"type": "message.1"})
         await layer.group_send("test-group", {"type": "message.1"})
         await layer.group_send("test-group", {"type": "message.1"})
-        await stack.aclose()
+
+
+@pytest.mark.asyncio
+async def test_groups_channel_full_parallel():
+    """
+    Tests that group_send ignores ChannelFull
+    """
+    async with AsyncExitStack() as stack:
+        layer = MultiprocessingChannelLayer(capacity=3)
+        stack.push_async_callback(layer.close)
+        await layer.group_add("test-group", "test-gr-chan-1")
+        await asyncio.gather(
+            *[
+                layer.group_send("test-group", {"type": "message.1"})
+                for i in range(1000)
+            ]
+        )
 
 
 @pytest.mark.asyncio
