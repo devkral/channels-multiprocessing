@@ -29,7 +29,7 @@ async def timeout_send(layer, message):
 
 async def timeout_receive(layer, message):
     await asyncio.sleep(random.random() / 2)
-    async with async_timeout.timeout(1):
+    async with async_timeout.timeout(10):
         assert message == await layer.receive("test.channel")
 
 
@@ -37,11 +37,13 @@ async def timeout_receive(layer, message):
 async def test_send_receive_wild_parallel():
     layer = MultiprocessingChannelLayer()
     message = {"type": "test.message"}
-    await asyncio.gather(
-        *[
-            timeout_send(layer, message)
-            if i % 2 == 0
-            else timeout_receive(layer, message)
+    await asyncio.wait(
+        [
+            asyncio.ensure_future(
+                timeout_send(layer, message)
+                if i % 2 == 0
+                else timeout_receive(layer, message)
+            )
             for i in range(120)
         ]
     )

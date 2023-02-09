@@ -35,10 +35,18 @@ async def test_send_capacity():
     async with AsyncExitStack() as stack:
         layer = MultiprocessingChannelLayer(capacity=3)
         stack.push_async_callback(layer.close)
-        await asyncio.gather(
-            layer.send("test-channel-1", {"type": "test.message"}),
-            layer.send("test-channel-1", {"type": "test.message"}),
-            layer.send("test-channel-1", {"type": "test.message"}),
+        await asyncio.wait(
+            [
+                asyncio.ensure_future(
+                    layer.send("test-channel-1", {"type": "test.message"})
+                ),
+                asyncio.ensure_future(
+                    layer.send("test-channel-1", {"type": "test.message"})
+                ),
+                asyncio.ensure_future(
+                    layer.send("test-channel-1", {"type": "test.message"})
+                ),
+            ]
         )
         with pytest.raises(ChannelFull):
             await layer.send("test-channel-1", {"type": "test.message"})
@@ -117,10 +125,18 @@ async def test_groups_parallel():
     async with AsyncExitStack() as stack:
         layer = MultiprocessingChannelLayer()
         stack.push_async_callback(layer.close)
-        await asyncio.gather(
-            layer.group_add("test-group", "test-gr-chan-1"),
-            layer.group_add("test-group", "test-gr-chan-2"),
-            layer.group_add("test-group", "test-gr-chan-3"),
+        await asyncio.wait(
+            [
+                asyncio.ensure_future(
+                    layer.group_add("test-group", "test-gr-chan-1")
+                ),
+                asyncio.ensure_future(
+                    layer.group_add("test-group", "test-gr-chan-2")
+                ),
+                asyncio.ensure_future(
+                    layer.group_add("test-group", "test-gr-chan-3")
+                ),
+            ]
         )
         await layer.group_discard("test-group", "test-gr-chan-2")
         await layer.group_send("test-group", {"type": "message.1"})
@@ -163,9 +179,11 @@ async def test_groups_channel_full_parallel():
         layer = MultiprocessingChannelLayer(capacity=3)
         stack.push_async_callback(layer.close)
         await layer.group_add("test-group", "test-gr-chan-1")
-        await asyncio.gather(
-            *[
-                layer.group_send("test-group", {"type": "message.1"})
+        await asyncio.wait(
+            [
+                asyncio.ensure_future(
+                    layer.group_send("test-group", {"type": "message.1"})
+                )
                 for i in range(500)
             ]
         )

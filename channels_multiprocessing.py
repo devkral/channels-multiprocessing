@@ -23,9 +23,9 @@ class ChannelsMultiprocessingQueue(Queue):
             elif timeout < 0:
                 raise ValueError("'timeout' must be a non-negative number")
             else:
-                endtime = time() + timeout
+                endtime = time.time() + timeout
                 while not self._qsize():
-                    remaining = endtime - time()
+                    remaining = endtime - time.time()
                     if remaining <= 0.0:
                         raise Empty
                     self.not_empty.wait(remaining)
@@ -88,14 +88,12 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(self.executor, fn, *args)
 
-    # why? we want to be able to use execute_as_async
     def _create_or_get_channel(self, name) -> ChannelsMultiprocessingQueue:
         return self.channels.setdefault(
             name,
             self.manager.ChannelsMultiprocessingQueue(self.get_capacity(name)),
         )
 
-    # why? we want to be able to use execute_as_async
     def _create_or_get_dict(self, d, name):
         return d.setdefault(name, self.manager.dict())
 
@@ -104,8 +102,7 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         Removes a channel from all groups. Used when a message on it expires.
         """
         for channels in self.groups.values():
-            if channel in channels:
-                del channels[channel]
+            channels.pop(channel, None)
 
     def _clean_expired(self):
         """
@@ -124,7 +121,7 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
                     # Any removal prompts group discard
                     self._remove_from_groups(channel)
             except Empty:
-                del self.channels[channel]
+                self.channels.pop(channel, None)
 
         # Group Expiration
         timeout = time.time() - self.group_expiry
@@ -135,7 +132,7 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
                 # end the group membership
                 if timestamp and timestamp < timeout:
                     # Delete from group
-                    del channels[name]
+                    channels.pop(name, None)
 
     # Channel layer API
 
@@ -177,14 +174,16 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
 
         # Do a plain direct receive
         try:
-            _, message, is_empty = await self.execute_as_async(queue.getp)
-        except (Empty, asyncio.CancelledError) as exc:
+            _, message, is_empty = await asyncio.wait_for(
+                self.execute_as_async(queue.getp), self.expiry
+            )
+        except (Empty, asyncio.CancelledError, asyncio.TimeoutError) as exc:
             # we need to clean it up here as we reraise the exception
-            del self.channels[channel]
+            self.channels.pop(channel, None)
             raise exc
         # second code path to clean it up
         if is_empty:
-            del self.channels[channel]
+            self.channels.pop(channel, None)
         return message
 
     async def new_channel(self, prefix="specific."):
@@ -201,13 +200,9 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
 
     # Flush extension
 
-    def _flush(self):
-        if self.active:
-            self.channels.clear()
-            self.groups.clear()
-
     async def flush(self):
-        await self.execute_as_async(self._flush)
+        self.channels.clear()
+        self.groups.clear()
 
     async def close(self):
         if self.active:
@@ -228,18 +223,16 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         d = self._create_or_get_dict(self.groups, group)
         d[channel] = time.time()
 
-    def _discard_group(self, group, channel):
-        group_ob = self.groups.get(group, None)
-        if group_ob:
-            group_ob.pop(channel, None)
-            if not group_ob:
-                del self.groups[group]
-
     async def group_discard(self, group, channel):
         # Both should be text and valid
         assert self.valid_channel_name(channel), "Invalid channel name"
         assert self.valid_group_name(group), "Invalid group name"
-        await self.execute_as_async(self._discard_group, group, channel)
+        group_ob = self.groups.get(group, None)
+        if group_ob:
+            group_ob.pop(channel, None)
+            # group is now empty
+            if not group_ob:
+                self.groups.pop(group, None)
 
     async def group_send(self, group, message):
         # Check types
@@ -252,5 +245,5 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
 
         if group in self.groups:
             for channel in self.groups[group].keys():
-                ops.append(self.send(channel, message))
-        await asyncio.gather(*ops, return_exceptions=True)
+                ops.append(asyncio.ensure_future(self.send(channel, message)))
+        await asyncio.wait(ops)
