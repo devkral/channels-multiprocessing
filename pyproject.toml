@@ -8,6 +8,8 @@ readme = "README.md"
 repository = "https://github.com/devkral/channels-multiprocessing"
 classifiers = [
   "Framework :: Django",
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: BSD License"
 ]
 
 [tool.poetry.dependencies]
