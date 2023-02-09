@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "channels-multiprocessing"
 description = "Django channels with plain multiprocessing"
-version = "0.1"
+version = "0.1.1"
 license = "BSD"
 authors = ["Alexander Kaftan"]
 readme = "README.md"
