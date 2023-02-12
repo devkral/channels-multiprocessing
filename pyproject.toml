@@ -49,6 +49,8 @@ setenv =
 
 """
 
+[tool.black]
+line-length = 79
 
 [pytest]
 addopts = "-p no:django"
