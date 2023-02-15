@@ -86,7 +86,7 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         for channels in self.groups.values():
             channels.pop(channel, None)
 
-    async def _clean_expired(self):
+    def _clean_expired(self):
         """
         Goes through all messages and groups and
         removes those that are expired.
@@ -160,7 +160,7 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         """
         assert self.valid_channel_name(channel)
         # Run clean
-        await self._clean_expired()
+        self._clean_expired()
 
         # Do a plain direct receive
         try:
@@ -224,7 +224,7 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         assert isinstance(message, dict), "Message is not a dict"
         assert self.valid_group_name(group), "Invalid group name"
         # Run clean
-        await self._clean_expired()
+        self._clean_expired()
         # Send to each channel
         ops = []
 
