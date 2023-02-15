@@ -32,14 +32,14 @@ async def test_send_receive_simple():
 
 
 async def timeout_send(layer, channel, message):
-    await asyncio.sleep(random.random() / 2)
-    async with async_timeout.timeout(1):
+    await asyncio.sleep(random.random() / 4)
+    async with async_timeout.timeout(5):
         await layer.send(channel, message)
 
 
 async def timeout_receive(layer, channel, message):
-    await asyncio.sleep(random.random() / 2)
-    async with async_timeout.timeout(10):
+    await asyncio.sleep(random.random() / 4)
+    async with async_timeout.timeout(5):
         assert message == await layer.receive(channel)
 
 
@@ -66,15 +66,25 @@ def generate_messages(layer, channels=2):
 @pytest.mark.asyncio
 async def test_send_receive_massive_parallel():
     async with cleanup(MultiprocessingChannelLayer(capacity=60)) as layer:
-        for result in asyncio.as_completed(list(generate_messages(layer, 1))):
-            await result
+        errors = []
+        for result in asyncio.as_completed(list(generate_messages(layer, 2))):
+            try:
+                await result
+            except asyncio.TimeoutError as exc:
+                errors.append(exc)
+        assert not errors
 
 
 @pytest.mark.asyncio
 async def test_send_receive_massive_multichannel_parallel():
     async with cleanup(MultiprocessingChannelLayer(capacity=60)) as layer:
+        errors = []
         for result in asyncio.as_completed(list(generate_messages(layer, 10))):
-            await result
+            try:
+                await result
+            except asyncio.TimeoutError as exc:
+                errors.append(exc)
+        assert not errors
 
 
 @pytest.mark.asyncio
@@ -85,7 +95,7 @@ async def test_send_receive_massive_timeout_parallel():
         for result in asyncio.as_completed(list(generate_messages(layer))):
             try:
                 await result
-            except Exception:
+            except asyncio.TimeoutError:
                 pass
 
 
