@@ -2,10 +2,18 @@ import asyncio
 
 import async_timeout
 import pytest
-from contextlib import AsyncExitStack
+from contextlib import asynccontextmanager
 
 from channels.exceptions import ChannelFull
 from channels_multiprocessing import MultiprocessingChannelLayer
+
+
+@asynccontextmanager
+async def cleanup(layer):
+    try:
+        yield layer
+    finally:
+        await layer.close()
 
 
 @pytest.mark.asyncio
@@ -14,17 +22,13 @@ async def test_send_receive():
     Makes sure we can send a message to a normal channel then receive it.
     """
 
-    async with AsyncExitStack() as stack:
-        layer = MultiprocessingChannelLayer(capacity=3)
-        stack.push_async_callback(layer.close)
-
+    async with cleanup(MultiprocessingChannelLayer(capacity=3)) as layer:
         await layer.send(
             "test-channel-1", {"type": "test.message", "text": "Ahoy-hoy!"}
         )
         message = await layer.receive("test-channel-1")
         assert message["type"] == "test.message"
         assert message["text"] == "Ahoy-hoy!"
-        await stack.aclose()
 
 
 @pytest.mark.asyncio
@@ -32,9 +36,7 @@ async def test_send_capacity():
     """
     Makes sure we get ChannelFull when we hit the send capacity
     """
-    async with AsyncExitStack() as stack:
-        layer = MultiprocessingChannelLayer(capacity=3)
-        stack.push_async_callback(layer.close)
+    async with cleanup(MultiprocessingChannelLayer(capacity=3)) as layer:
         await asyncio.wait(
             [
                 asyncio.ensure_future(
@@ -50,7 +52,6 @@ async def test_send_capacity():
         )
         with pytest.raises(ChannelFull):
             await layer.send("test-channel-1", {"type": "test.message"})
-        await stack.aclose()
 
 
 @pytest.mark.asyncio
@@ -60,9 +61,7 @@ async def test_process_local_send_receive():
     it.
     """
 
-    async with AsyncExitStack() as stack:
-        layer = MultiprocessingChannelLayer(capacity=3)
-        stack.push_async_callback(layer.close)
+    async with cleanup(MultiprocessingChannelLayer(capacity=3)) as layer:
         channel_name = await layer.new_channel()
         await layer.send(
             channel_name, {"type": "test.message", "text": "Local only please"}
@@ -70,7 +69,6 @@ async def test_process_local_send_receive():
         message = await layer.receive(channel_name)
         assert message["type"] == "test.message"
         assert message["text"] == "Local only please"
-        await stack.aclose()
 
 
 @pytest.mark.asyncio
@@ -78,16 +76,13 @@ async def test_multi_send_receive():
     """
     Tests overlapping sends and receives, and ordering.
     """
-    async with AsyncExitStack() as stack:
-        layer = MultiprocessingChannelLayer()
-        stack.push_async_callback(layer.close)
+    async with cleanup(MultiprocessingChannelLayer()) as layer:
         await layer.send("test-channel-3", {"type": "message.1"})
         await layer.send("test-channel-3", {"type": "message.2"})
         await layer.send("test-channel-3", {"type": "message.3"})
         assert (await layer.receive("test-channel-3"))["type"] == "message.1"
         assert (await layer.receive("test-channel-3"))["type"] == "message.2"
         assert (await layer.receive("test-channel-3"))["type"] == "message.3"
-        await stack.aclose()
 
 
 @pytest.mark.asyncio
@@ -95,9 +90,7 @@ async def test_groups_basic():
     """
     Tests basic group operation.
     """
-    async with AsyncExitStack() as stack:
-        layer = MultiprocessingChannelLayer()
-        stack.push_async_callback(layer.close)
+    async with cleanup(MultiprocessingChannelLayer()) as layer:
         await layer.group_add("test-group", "test-gr-chan-1")
         await layer.group_add("test-group", "test-gr-chan-2")
         await layer.group_add("test-group", "test-gr-chan-3")
@@ -122,9 +115,7 @@ async def test_groups_parallel():
     """
     Tests basic group operation.
     """
-    async with AsyncExitStack() as stack:
-        layer = MultiprocessingChannelLayer()
-        stack.push_async_callback(layer.close)
+    async with cleanup(MultiprocessingChannelLayer()) as layer:
         await asyncio.wait(
             [
                 asyncio.ensure_future(
@@ -159,9 +150,7 @@ async def test_groups_channel_full():
     """
     Tests that group_send ignores ChannelFull
     """
-    async with AsyncExitStack() as stack:
-        layer = MultiprocessingChannelLayer(capacity=3)
-        stack.push_async_callback(layer.close)
+    async with cleanup(MultiprocessingChannelLayer(capacity=3)) as layer:
         await layer.group_add("test-group", "test-gr-chan-1")
         await layer.group_send("test-group", {"type": "message.1"})
         await layer.group_send("test-group", {"type": "message.1"})
@@ -175,9 +164,7 @@ async def test_groups_channel_full_parallel():
     """
     Tests that group_send ignores ChannelFull
     """
-    async with AsyncExitStack() as stack:
-        layer = MultiprocessingChannelLayer(capacity=3)
-        stack.push_async_callback(layer.close)
+    async with cleanup(MultiprocessingChannelLayer(capacity=3)) as layer:
         await layer.group_add("test-group", "test-gr-chan-1")
         await asyncio.wait(
             [
@@ -194,9 +181,7 @@ async def test_expiry_single():
     """
     Tests that a message can expire.
     """
-    async with AsyncExitStack() as stack:
-        layer = MultiprocessingChannelLayer(expiry=0.1)
-        stack.push_async_callback(layer.close)
+    async with cleanup(MultiprocessingChannelLayer(expiry=0.1)) as layer:
         await layer.send("test-channel-1", {"type": "message.1"})
         assert len(layer.channels) == 1
 
@@ -218,9 +203,7 @@ async def test_expiry_unread():
     the channel is not read from again.
     """
 
-    async with AsyncExitStack() as stack:
-        layer = MultiprocessingChannelLayer(expiry=0.1)
-        stack.push_async_callback(layer.close)
+    async with cleanup(MultiprocessingChannelLayer(expiry=0.1)) as layer:
         await layer.send("test-channel-1", {"type": "message.1"})
 
         await asyncio.sleep(0.1)
@@ -237,9 +220,7 @@ async def test_expiry_multi():
     """
     Tests that multiple messages can expire.
     """
-    async with AsyncExitStack() as stack:
-        layer = MultiprocessingChannelLayer(expiry=0.1)
-        stack.push_async_callback(layer.close)
+    async with cleanup(MultiprocessingChannelLayer(expiry=0.1)) as layer:
         assert len(layer.channels) == 0
         await layer.send("test-channel-1", {"type": "message.1"})
         await layer.send("test-channel-1", {"type": "message.2"})
