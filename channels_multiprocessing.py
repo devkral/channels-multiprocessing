@@ -1,14 +1,15 @@
-from copy import deepcopy
-from channels.layers import BaseChannelLayer
-from channels.exceptions import ChannelFull
-from multiprocessing.managers import SyncManager
-from multiprocessing import get_context
-import time
+import asyncio
 import random
 import string
-from queue import Queue, Full, Empty
+import time
 from concurrent.futures import ThreadPoolExecutor
-import asyncio
+from copy import deepcopy
+from multiprocessing import get_context
+from multiprocessing.managers import SyncManager
+from queue import Empty, Full, Queue
+
+from channels.exceptions import ChannelFull
+from channels.layers import BaseChannelLayer
 
 
 class ChannelsMultiprocessingQueue(Queue):
@@ -108,7 +109,6 @@ class MultiprocessingChannelLayer(BaseChannelLayer):
         # Group Expiration
         timeout = time.time() - self.group_expiry
         for channels in self.groups.values():
-
             for name, timestamp in list(channels.items()):
                 # If join time is older than group_expiry
                 # end the group membership
